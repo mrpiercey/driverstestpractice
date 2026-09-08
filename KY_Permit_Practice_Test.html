@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kentucky Permit Practice Test</title>
+<style>
+  :root{--page:#f3f4f1;--card:#fff;--ink:#1c1f1d;--muted:#5d625f;--line:#d7dad6;--green:#0b6b3a;--green-soft:#e3f1e8;--red:#c8102e;--red-soft:#fbe6e9;--gold:#f2c318}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--page);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:17px;line-height:1.5}
+  .wrap{max-width:700px;margin:0 auto;padding:32px 20px 64px}
+  header{margin-bottom:28px}
+  h1{font-size:26px;font-weight:600;margin:0}
+  .sub{font-size:14px;color:var(--muted);margin:2px 0 0}
+  .status{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:10px}
+  .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:24px}
+  .bar div{height:100%;width:0;background:var(--green);transition:width .25s}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px}
+  .signbox{display:flex;justify-content:center;background:var(--page);border-radius:10px;padding:24px;margin-bottom:22px}
+  .signbox img{max-height:200px;max-width:260px;width:auto;height:auto}
+  .q{font-size:20px;font-weight:600;margin:0 0 16px;line-height:1.35}
+  .opt{display:block;width:100%;text-align:left;font:inherit;font-size:17px;padding:13px 16px;margin:8px 0;background:var(--card);color:var(--ink);border:1.5px solid var(--line);border-radius:10px;cursor:pointer}
+  .opt:hover{border-color:var(--ink)}
+  .opt:focus-visible,.btn:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .opt.right{background:var(--green-soft);border-color:var(--green);color:var(--green)}
+  .opt.wrong{background:var(--red-soft);border-color:var(--red);color:var(--red)}
+  .opt:disabled{cursor:default}
+  .fb{font-size:15px;color:var(--muted);margin:14px 0 0;min-height:24px;line-height:1.55}
+  .fb strong{color:var(--ink);font-weight:600}
+  .actions{display:flex;gap:10px;margin-top:20px}
+  .btn{font:inherit;font-size:16px;font-weight:600;padding:12px 22px;border-radius:10px;border:none;cursor:pointer;background:var(--green);color:#fff}
+  .result{text-align:center;padding:12px 0}
+  .result .big{font-size:56px;font-weight:700;margin:0;line-height:1}
+  .result .verdict{font-size:20px;margin:10px 0 4px}
+  .result .note{color:var(--muted);font-size:15px;margin:0 0 20px}
+  .missed{text-align:left;font-size:15px;margin:0;padding-left:20px;color:var(--muted)}
+  .missed li{margin:4px 0}
+  @media (prefers-reduced-motion:reduce){.bar div{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Kentucky permit practice test</h1>
+    <p class="sub">40 questions drawn at random from a bank of 100, all from the Kentucky Driver Manual. You need 32 correct to pass, same as the real test.</p>
+  </header>
+  <div class="status"><span id="prog">Question 1 of 40</span><span id="score">0 correct</span></div>
+  <div class="bar"><div id="barfill"></div></div>
+  <div class="card" id="card">
+    <div class="signbox" id="signwrap"><img id="sign" alt="Road sign"></div>
+    <p class="q" id="q"></p>
+    <div id="opts"></div>
+    <p class="fb" id="fb"></p>
+    <div class="actions"><button class="btn" id="next" style="display:none">Next question</button></div>
+  </div>
+</div>
+<script>
+var Q=[
+{s:'signs/R1-1_Stop.png',q:'This sign means:',o:['Slow down and look both ways','Stop behind the stop line or crosswalk and yield to all crossing traffic and pedestrians','Stop only if another car is coming','Yield to traffic on your right'],a:1,e:'A stop sign has eight sides and is red with white letters. Stop behind the stop line or crosswalk and yield in all directions.'},
+{q:'The standard shape used only for stop signs is the:',o:['Diamond','Octagon (eight sides)','Pentagon (five sides)','Round'],a:1,e:'From the manual\'s standard shapes chart: the octagon is used only for stop signs.'},
+{s:'signs/R1-2_Yield.png',q:'This sign means:',o:['Come to a full stop','Slow down and let traffic that has the right of way go first before you enter','Merge left','Speed up to fit into traffic'],a:1,e:'A yield sign is a red and white downward-pointing triangle. Slow down and allow traffic with the right of way to cross before entering.'},
+{q:'You arrive at a four-way stop at the same time as another driver. You should:',o:['Continue through the intersection','Yield to the driver on your right','Let the driver on your left go first','Flash your lights and go'],a:1,e:'This is question 3 of the manual\'s own sample test. Yield to the driver on your right.'},
+{q:'You should yield the right of way to:',o:['The driver who arrived at the intersection before you','Only vehicles larger than yours','Vehicles behind you','No one if you are going straight'],a:0,e:'The first rule of yielding in the manual: yield to the driver who is at or arrives before you at the intersection.'},
+{q:'When making a left turn on a green light, you must:',o:['Go immediately, you have the right of way','Yield to through traffic coming from the opposite direction, including vehicles turning right','Honk before turning','Stop before turning'],a:1,e:'Left turns must yield to oncoming traffic, and the manual says this includes vehicles turning right.'},
+{q:'When entering a highway from a driveway or private road, you must:',o:['Yield to drivers already on the highway','Enter quickly before traffic arrives','Flash your lights','Sound your horn'],a:0,e:'Drivers on a public highway have the right of way over vehicles entering from driveways or private roads.'},
+{q:'When you are on an entrance or acceleration ramp of an interstate, who has the right of way?',o:['You do, because you are merging','Drivers already on the interstate','The slower vehicle','Whoever is going faster'],a:1,e:'Drivers already on a limited access or interstate highway have the right of way over vehicles on the ramp.'},
+{q:'A police officer is directing traffic at an intersection with a working traffic light. You should:',o:['Obey the traffic light','Do what the officer instructs, regardless of the signals or signs','Stop and wait for the light to change','Treat it as a four-way stop'],a:1,e:'Directions from law enforcement override traffic control devices and signs.'},
+{q:'A yellow traffic light means:',o:['Speed up to beat the red','The signal is about to turn red; stop if you can do so safely','Stop immediately no matter what','Slow down and proceed without stopping'],a:1,e:'Stop if you can safely. You may clear the intersection on red only if you entered while it was yellow. Entering after it turns red is against the law.'},
+{q:'At a red light, when may you turn right?',o:['Never','After stopping, if there is no approaching traffic and no sign prohibits it','Without stopping if the road looks clear','Only between midnight and 6 a.m.'],a:1,e:'Stop first, then turn right when clear of vehicles and pedestrians, unless a sign prohibits it.'},
+{q:'A left turn on a red light is permitted only when:',o:['Turning from a one-way street onto a one-way street','No traffic is visible','Turning from a two-way street onto a one-way street','You are in the left lane'],a:0,e:'Left on red is allowed only from a one-way street onto a one-way street, after a full stop.'},
+{s:'signs/W1-2_Curve_Left.png',q:'This yellow diamond sign is a:',o:['Regulatory sign','Warning sign','Guide sign','Work zone sign'],a:1,e:'Warning signs are usually yellow with black symbols and diamond shaped. They tell you of possible danger ahead. This one warns of a curve to the left.'},
+{q:'Regulatory signs are:',o:['Green','Yellow','White','Orange'],a:2,e:'Question 6 of the manual\'s sample test. Regulatory signs are white with black, red, or green letters or symbols.'},
+{q:'Guide signs are:',o:['Yellow diamonds','Green, brown, or blue rectangles','Orange diamonds','Red octagons'],a:1,e:'Guide signs are square or rectangular and green, brown, or blue. They point you to cities, services, and points of interest.'},
+{s:'signs/W20-1_Road_Work_Ahead.png',q:'Orange signs with black letters are:',o:['School zone signs','Work zone signs','Guide signs','Regulatory signs'],a:1,e:'Construction, maintenance, and emergency operation signs are orange. They warn that people are working on or near the road.'},
+{q:'In a highway work zone, fines for speeding are:',o:['Waived if no one is hurt','Doubled when signs say so and at least one worker is present','The same as anywhere else','Tripled'],a:1,e:'Kentucky law allows doubled fines in a work zone when signs say fines are doubled and at least one worker is present.'},
+{s:'signs/S1-1_School_Crossing.png',q:'This five-sided sign means:',o:['Pedestrian crossing','School crossing','Playground','Bus stop'],a:1,e:'Standard shapes: the pentagon is used for school signs.'},
+{s:'signs/S5-1_School_Speed_Limit.png',q:'The lower speed limit on this sign applies:',o:['At all times','When the lights are flashing or children are present','Only on weekends','Only when a bus is stopped'],a:1,e:'In a school zone when lights are flashing or children are present, you must obey the slower limit.'},
+{s:'signs/W10-1_Railroad_Crossing_Ahead.png',q:'This round yellow sign means:',o:['You are at the railroad tracks','A railroad crossing is ahead; slow down, look, listen, and be ready to stop','Roundabout ahead','No trains use this crossing'],a:1,e:'The round advance warning sign is placed along the road before a highway-railroad grade crossing.'},
+{s:'signs/R15-1_Railroad_Crossbuck.png',q:'The white crossbuck sign at the tracks is a regulatory sign that means the same as:',o:['A stop sign','A yield sign','A speed limit sign','A do not enter sign'],a:1,e:'The manual says the crossbuck near the tracks is a regulatory sign that means the same as a yield sign.'},
+{q:'The stopping distance for an average freight train at 55 mph may be:',o:['About 200 feet','About 500 feet','A mile or more','Half a mile'],a:2,e:'Trains cannot stop quickly. Cars can. Never start across unless you can get completely off the tracks.'},
+{q:'Crossing railroad tracks after the warning lights are flashing or the gates are down is:',o:['Allowed if no train is visible','Against the law','Allowed at night','Allowed if you go fast'],a:1,e:'Expect a train at every crossing. Crossing when lights flash or gates are down can get you cited.'},
+{s:'signs/R2-1_Speed_Limit_55.png',q:'A speed limit sign shows:',o:['The minimum legal speed','The maximum legal speed allowed in ideal conditions','A suggested speed','The speed for trucks only'],a:1,e:'Speed limit signs indicate the maximum legal speed in ideal conditions. Slow down when conditions are worse.'},
+{q:'When not posted, the speed limit on Kentucky interstate highways and parkways is:',o:['55 mph','60 mph','65 mph','75 mph'],a:2,e:'65 mph on interstates and parkways, 55 on other state highways. The transportation secretary may raise specific highways to 70.'},
+{q:'When not posted, the speed limit on state highways other than interstates and parkways is:',o:['45 mph','55 mph','65 mph','70 mph'],a:1,e:'55 mph is the default for all other state highways.'},
+{q:'When not posted, the speed limit in a business or residential district is:',o:['25 mph','30 mph','35 mph','45 mph'],a:2,e:'35 mph in a business or residential district.'},
+{q:'The speed limit in an off-street parking facility open to the public is:',o:['10 mph','15 mph','20 mph','25 mph'],a:1,e:'15 mph in public parking lots, whether publicly or privately owned.'},
+{q:'In heavy rain, snow, or thick fog when you cannot see more than 100 feet ahead, you cannot safely drive faster than:',o:['15 mph','25 mph','35 mph','45 mph'],a:1,e:'The manual says 25 mph when you cannot see beyond 100 feet. Use low beams too.'},
+{q:'The minimum following distance the Kentucky manual says to keep behind the vehicle in front of you is:',o:['2 seconds','3 seconds','4 seconds','One car length per 10 mph'],a:2,e:'Kentucky uses a 4-second minimum. Count "one thousand one" through "one thousand four" from a fixed point after the car ahead passes it.'},
+{q:'You should increase your following distance when:',o:['Roads are dry and clear','Following large trucks, motorcycles, or in bad weather','Driving in a parking lot','Driving in daylight'],a:1,e:'Add space on slippery roads, behind trucks, buses, RVs, trailers, motorcycles, at night, in fog, and behind vehicles that must stop at railroad crossings.'},
+{q:'When driving, you should ideally look ahead:',o:['To the car in front of you','5 seconds ahead','20 to 30 seconds ahead','Only at the road directly in front'],a:2,e:'Look at what is occurring 20 to 30 seconds in front of your car so you have time to plan.'},
+{q:'When following a vehicle, you must dim your high beams within:',o:['100 feet','200 feet','300 feet','500 feet'],a:2,e:'Dim within 500 feet of oncoming vehicles and within 300 feet of any vehicle you are following.'},
+{q:'When approaching an oncoming vehicle at night, dim your high beams within:',o:['100 feet','300 feet','500 feet','1,000 feet'],a:2,e:'500 feet for oncoming traffic, 300 feet for a vehicle you are following.'},
+{q:'When driving at night, use your high beams when:',o:['Fog, rain, or snow is present','Following another vehicle','There is no oncoming traffic approaching','Driving in the city'],a:2,e:'Question 10 of the manual\'s sample test. High beams let you see twice as far, but use low beams for oncoming traffic, when following, and in fog, rain, or snow.'},
+{q:'Headlights must be on from:',o:['Sunset to sunrise','One-half hour after sunset to one-half hour before sunrise','9 p.m. to 6 a.m.','Only when raining'],a:1,e:'Kentucky law: headlights on from half an hour after sunset to half an hour before sunrise.'},
+{q:'When turning at an intersection, you should signal at least:',o:['50 feet before','100 feet before','200 feet before','As you begin the turn'],a:1,e:'Signal 100 feet before the turn.'},
+{q:'The manual says the hand position on the steering wheel should be:',o:['10 and 2 o\'clock','3 and 9 o\'clock','12 and 6 o\'clock','One hand at 12'],a:1,e:'10 and 2 is no longer recommended because of air bags. Use 3 and 9, hands on the outside of the wheel, thumbs up along the face.'},
+{q:'There should be at least how much space between your chest and the steering wheel?',o:['4 inches','6 inches','10 inches','18 inches'],a:2,e:'10 inches, for safe air bag deployment. Do not recline the seat.'},
+{q:'A yellow dashed line on your side of the roadway means:',o:['Passing is prohibited on both sides','Passing is permitted on both sides','Passing is permitted on your side','The road is one way'],a:2,e:'Question 2 of the manual\'s sample test. A broken yellow line on your side means you may pass when safe.'},
+{q:'A solid yellow line on your side of a broken yellow line means:',o:['You may pass','You may not pass','Two-way traffic ends','The lane is closed'],a:1,e:'You may not pass when there is a solid line on your side of the broken line.'},
+{s:'signs/R4-1_Do_Not_Pass.png',q:'This sign means:',o:['Pass with care','Do not pass other vehicles here','Left lane closed','Trucks keep right'],a:1,e:'A regulatory sign. Stay in your lane until a Pass With Care sign.'},
+{q:'Kentucky law requires a pass to be completed before coming within how far of an oncoming vehicle?',o:['100 feet','200 feet','300 feet','500 feet'],a:1,e:'Complete the pass before reaching a no passing zone and before coming within 200 feet of an oncoming vehicle.'},
+{q:'After passing, it is safe to return to your lane when:',o:['You are alongside the other car','You can see the complete front of the passed vehicle in your rearview mirror','The other driver waves','Five seconds have passed'],a:1,e:'Continue passing until the whole front of the passed vehicle is visible in your rearview mirror, then signal and return.'},
+{q:'When approaching a hill or curve where you cannot see ahead, you should:',o:['Pass quickly','Treat it as if an oncoming vehicle is just out of sight and do not pass','Pass only if no signs prohibit it','Honk and pass'],a:1,e:'Assume there is an oncoming vehicle just out of sight. Do not start to pass approaching a hill or curve.'},
+{q:'When another vehicle is passing you, Kentucky law says you should:',o:['Speed up','Stay in your lane and give way to the right','Move into the left lane','Slam on the brakes'],a:1,e:'The vehicle being passed must give way to the right in favor of the overtaking vehicle.'},
+{q:'When passing a bicyclist on a road with one lane in your direction, keep at least:',o:['1 foot','2 feet','3 feet','6 feet'],a:2,e:'At least three feet between your vehicle and the bicycle until you are safely past. You may cross the center line, even in a no passing zone, if it is clear.'},
+{q:'On a highway with three or more lanes in one direction, the left lane is for:',o:['Slower traffic','Drivers who want to pass or turn left','Trucks only','Entering traffic'],a:1,e:'Middle lanes are for through traffic, the left lane for passing or turning left, the right lane for slower or turning traffic.'},
+{q:'Staying in the left lane on a limited access highway when not passing is:',o:['Recommended','Illegal in Kentucky','Allowed if driving the speed limit','Allowed for trucks'],a:1,e:'The manual states that remaining in the left lane on a limited access highway is illegal.'},
+{q:'Before changing lanes, you should check your blind spot by:',o:['Using only your mirrors','Turning your head and looking over your shoulder','Honking','Slowing down first'],a:1,e:'Check mirrors, then turn your head and look over your shoulder in the direction you plan to move.'},
+{q:'When entering a multi-lane highway, use the acceleration lane to:',o:['Stop and wait for a gap','Reach the speed of other vehicles before merging','Pass slower cars','Signal for 10 seconds'],a:1,e:'Get up to traffic speed, find a gap, merge, then cancel your signal. Existing traffic has the right of way.'},
+{q:'If you miss your exit on an interstate, you should:',o:['Back up on the shoulder','Make a U-turn','Go to the next exit and work your way back','Stop and wait for help'],a:2,e:'Never back up or turn around on an interstate.'},
+{q:'When turning left from a two-way street, you should turn from:',o:['The lane nearest the curb','The lane nearest the center line, into the lane nearest you','Any lane','The shoulder'],a:1,e:'Turn left from the lane nearest the center. Turn right from the lane nearest the curb. Turn into the lane nearest to you.'},
+{q:'If you have already started through an intersection when the light changes, you should:',o:['Stop immediately','Keep going','Back up','Turn right'],a:1,e:'Last-second changes cause collisions. If you started a turn, follow through.'},
+{s:'signs/R5-1_Do_Not_Enter.png',q:'This sign means:',o:['Stop ahead','You cannot enter this street or roadway','Road closed for construction','No trucks'],a:1,e:'Often found at exit ramps and at the beginning of one-way streets.'},
+{s:'signs/R5-1a_Wrong_Way.png',q:'This sign tells you:',o:['The road is closed','You are going the wrong direction','A detour is ahead','Left turn only'],a:1,e:'Found at exit ramps and the start of one-way streets. Turn around safely.'},
+{s:'signs/R6-1_One_Way.png',q:'This sign means:',o:['Keep right','Traffic flows only in the direction of the arrow','Right turn only','Merge right'],a:1,e:'Do not turn in the opposite direction of the arrow.'},
+{s:'signs/R3-4_No_U_Turn.png',q:'A red circle with a red slash over a symbol means:',o:['Caution','The action shown is prohibited','The action is allowed with care','Yield'],a:1,e:'Some regulatory signs use a red circle and slash to prohibit certain actions. This one prohibits U-turns.'},
+{s:'signs/R3-1_No_Right_Turn.png',q:'This sign means:',o:['No right turn','Right turn only','No left turn','Keep right'],a:0,e:'The slash over the right arrow prohibits right turns here.'},
+{s:'signs/R3-5_Left_Turn_Only.png',q:'Vehicles in this lane must:',o:['Go straight','Turn left','Turn right','Stop'],a:1,e:'Lane use signs tell you what movement is allowed from that lane.'},
+{s:'signs/R10-11_No_Turn_On_Red.png',q:'This sign means:',o:['No right turn ever','You may not turn on a red light here','Right turn only','Stop before turning'],a:1,e:'Without this sign you could turn right on red after a full stop when clear. With it, wait for green.'},
+{s:'signs/R4-7_Keep_Right.png',q:'This sign means:',o:['Right turn only','Stay to the right of the divider or obstruction ahead','Right lane closed','Slower traffic keep right'],a:1,e:'Keep right of the island, median, or obstruction.'},
+{s:'signs/R8-3_No_Parking.png',q:'This sign means:',o:['No stopping at any time','No parking here','Handicapped parking','Emergency parking only'],a:1,e:'Check for signs or painted curbs that prohibit or limit parking.'},
+{s:'signs/R11-2_Road_Closed.png',q:'This sign means:',o:['Slow down for workers','The road is closed to all traffic; find another route','Local traffic only','Bridge out'],a:1,e:'Barriers keep drivers from entering closed roads or dangerous areas.'},
+{s:'signs/M1-1_Interstate_64.png',q:'This shield marks:',o:['A state route','An interstate route','A U.S. route','A county road'],a:1,e:'Route number signs use shape and color to show the type of road. The red, white, and blue shield is an interstate.'},
+{s:'signs/M1-4_US_Route_60.png',q:'This shield marks:',o:['An interstate route','A U.S. route','A state route','A parkway'],a:1,e:'The white shield with black numbers is a U.S. route.'},
+{s:'signs/W3-1_Stop_Ahead.png',q:'This sign means:',o:['Stop here','A stop sign is ahead; be prepared to stop','Yield ahead','Signal ahead'],a:1,e:'Warning signs tell you of possible danger ahead so you can slow down and be ready to stop.'},
+{s:'signs/W4-1_Merge.png',q:'This sign means:',o:['Lane ends','Traffic is merging from the side shown; adjust your speed to make room','Divided highway','Keep right'],a:1,e:'Merging traffic sign from the manual\'s warning sign chart.'},
+{s:'signs/W4-2_Lane_Ends.png',q:'This sign means:',o:['Road narrows on both sides','The right lane ends ahead; merge left','Bridge ahead','Keep right'],a:1,e:'Lane ends. Move over early.'},
+{s:'signs/W6-1_Divided_Highway.png',q:'Which sign warns that a divided highway begins?',o:['This one','A sign with two arrows pointing at each other','A merge sign','A road narrows sign'],a:0,e:'Question 4 of the manual\'s sample test. A median will separate traffic ahead.'},
+{s:'signs/W6-3_Two_Way_Traffic.png',q:'This sign means:',o:['Divided highway ends','You are on or entering a two-way road; watch for oncoming traffic','Pass on either side','One way'],a:1,e:'Two way traffic warning sign.'},
+{s:'signs/W1-8_Chevron.png',q:'A row of these along the road marks:',o:['A sharp change in road direction','A one-way road','A passing zone','A bike lane'],a:0,e:'Chevrons line the outside of sharp curves. Slow down before you reach them.'},
+{s:'signs/W2-1_Crossroad.png',q:'This sign means:',o:['A crossroad (four-way intersection) is ahead','Railroad crossing','Hospital','Add lane'],a:0,e:'Cross road warning sign. Search for cross traffic.'},
+{s:'signs/W2-4_T_Intersection.png',q:'This sign means:',o:['Crossroad','The road ends ahead at a T intersection; you must turn left or right','Dead end','Y intersection'],a:1,e:'T intersection from the manual\'s warning chart.'},
+{s:'signs/W5-2_Narrow_Bridge.png',q:'This sign means:',o:['Bridge out','Narrow bridge ahead; take turns, first driver to the bridge has the right of way','Low clearance','Toll ahead'],a:1,e:'The manual: on narrow or single-lane bridges, take turns crossing. Generally the first driver to the bridge has the right of way.'},
+{s:'signs/W8-5_Slippery_When_Wet.png',q:'This sign means:',o:['Winding road','The road is slippery when wet','Loose gravel','Bumpy road'],a:1,e:'Reduce speed at the first sign of rain, snow, sleet, or ice.'},
+{q:'A flashing red light means:',o:['Slow down and watch for others','Come to a full stop and proceed only when clear','The signal is broken','Stop and wait for green'],a:1,e:'Flashing red equals a full stop. Flashing yellow means slow down and watch for others.'},
+{q:'A permit holder may drive only when accompanied by a licensed driver who is at least:',o:['18 years old','19 years old','21 years old','25 years old'],a:2,e:'The licensed driver must be 21 or older and in the front passenger seat. The permit must be in your possession at all times.'},
+{q:'Permit holders ages 16 to 20 must hold the permit at least:',o:['30 days','90 days','180 days','One year'],a:2,e:'180 days minimum. Drivers 21 and over hold the permit 30 days.'},
+{q:'To be eligible for an intermediate license, a teen must log practice driving hours of:',o:['30 hours, 5 at night','40 hours, 10 at night','60 hours, 10 at night','100 hours, 20 at night'],a:2,e:'60 hours on the Practice Driving Log, 10 of them at night, signed by a parent or guardian.'},
+{q:'Permit and intermediate license holders under 18 may not drive between:',o:['10 p.m. and 5 a.m.','11 p.m. and 6 a.m.','Midnight and 6 a.m.','9 p.m. and 7 a.m.'],a:2,e:'Midnight to 6 a.m. unless the driver can show good cause, such as emergencies, school, or work.'},
+{q:'The passenger restriction for permit and intermediate drivers under 18 is:',o:['No passengers','One unrelated person under 20','Two unrelated people under 21','As many as there are seat belts'],a:1,e:'Limited to one unrelated person under 20 years of age.'},
+{q:'A driver under 18 may have driving privileges suspended after accumulating:',o:['4 points','7 points','10 points','12 points'],a:1,e:'12 points for drivers 18 and over, 7 points for drivers under 18, within a two-year period.'},
+{q:'For drivers under 21, the "zero tolerance" blood alcohol level in Kentucky is:',o:['0.00','0.02','0.05','0.08'],a:1,e:'Under 21: .02 BAC. Adults: .08. The manual also notes vision is affected at .02 for everyone.'},
+{q:'Kentucky\'s implied consent law means:',o:['You must carry insurance','By driving, you have agreed to a lawfully requested breath, blood, or urine test','Police may search your car anytime','You must wear a seat belt'],a:1,e:'Refusing a lawfully requested test may result in license suspension and can be used against you in court.'},
+{q:'If you fail the road skills test, you must wait before trying again at least:',o:['One day','One week','30 days','90 days'],a:1,e:'At least one week. Practice during that time is encouraged.'},
+{q:'To pass the written knowledge test you need a score of at least:',o:['70 percent','75 percent','80 percent','90 percent'],a:2,e:'A minimum score of 80 percent. The signs portion must be answered from your own knowledge even if the test is given orally.'},
+{q:'Drivers whose permits were issued under 18 must, before their 18th birthday, enroll in:',o:['A defensive driving course','An approved driver training program','State Traffic School','A motorcycle safety course'],a:1,e:'Required before moving to the full unrestricted license. The classroom version is free and the online version is $11.'},
+{q:'Kentucky law requires seat belts for the driver and all passengers in vehicles manufactured after:',o:['1965','1975','1981','1995'],a:2,e:'The seat belt law is primary in Kentucky, so police can stop you just for not wearing one.'},
+{q:'A child 40 inches tall or less must ride in:',o:['The front seat','A child restraint system meeting federal standards','A booster seat only','A lap belt'],a:1,e:'Under 8 years old and between 40 and 57 inches requires a booster seat. Over 57 inches does not require a booster.'},
+{q:'Children 12 years of age and under should ride:',o:['In the front seat','In the back seat','Wherever they like','On a lap'],a:1,e:'Back seat, in a seat belt or child restraint. Never put a rear-facing seat in front of an active air bag.'},
+{q:'You are following a school bus that stops with its lights flashing on a two-lane road. You must:',o:['Slow to 15 mph and pass','Stop and remain stopped until all people are clear and the bus is moving','Stop only if children are visible','Pass carefully on the left'],a:1,e:'A stop is not required only when approaching from the opposite direction on a highway of four or more lanes.'},
+{q:'When you hear a siren or see flashing red or blue lights behind you, you must:',o:['Speed up to get out of the way','Drive to the right side of the road, clear of any intersection, and stop','Stop where you are','Continue at the same speed'],a:1,e:'Remain stopped until the emergency vehicle has passed. It is also unlawful to follow an emergency vehicle closer than 500 feet.'},
+{q:'Under Kentucky\'s move-over law, when approaching an emergency vehicle stopped on the shoulder of a four-lane highway you should:',o:['Stop in your lane','Approach slowly and move into the left lane if it is safe to do so','Flash your lights','Pass at normal speed'],a:1,e:'On two-lane highways, approach slowly and pass with caution.'},
+{q:'If your vehicle begins to skid sideways, you should:',o:['Brake hard','Turn the wheel in the direction the back of the vehicle is skidding','Turn the wheel the opposite way','Shift to park'],a:1,e:'Release the brake or gas, look where you want to go, and steer toward the skid so the front lines up with the back. The steering wheel is the most important control in a skid.'},
+{q:'If your brakes stop working while driving, the manual says to first:',o:['Pump the brake pedal','Use the parking brake, slowly so you do not lock the rear wheels','Turn off the engine','Shift to park'],a:1,e:'Apply the parking brake slowly. If that does not work, turn off the engine and find a safe place to stop.'},
+{q:'If a tire blows out, you should:',o:['Brake hard immediately','Grip the wheel firmly, keep the car straight, take your foot off the gas, and do not brake','Turn sharply toward the shoulder','Shift into neutral'],a:1,e:'Let the vehicle slow by itself or brake gently, then pull off the road and turn on flashers.'},
+{q:'Any collision with property damage over $500 that police do not investigate must be reported to the Kentucky State Police within:',o:['24 hours','3 days','10 days','30 days'],a:2,e:'File a written Civilian Traffic Collision report within 10 days. In a non-injury crash, move the vehicles to the shoulder.'},
+{q:'Motorcycle operators have the right to:',o:['Use a complete traffic lane','Share a lane with a vehicle','Use the shoulder','Pass between cars'],a:0,e:'Question 8 of the manual\'s sample test. Allow a motorcycle a full lane and at least a 4-second following distance.'},
+{q:'When approaching or passing a bicyclist, you should:',o:['Slow down and allow as much space as possible','Sound your horn to alert them','Speed up and pass quickly','Drive close to move them over'],a:0,e:'Question 9 of the manual\'s sample test. Honking can startle a bicyclist into your path.'},
+];
+var BANK=Q;
+Q=BANK.slice().sort(function(){return Math.random()-0.5}).slice(0,40);
+var i=0,sc=0,done=false,missed=[],PASS=32;
+function el(id){return document.getElementById(id)}
+function show(){
+  done=false;var d=Q[i];
+  el('prog').textContent='Question '+(i+1)+' of '+Q.length;
+  el('barfill').style.width=Math.round(i/Q.length*100)+'%';
+  if(d.s){el('signwrap').style.display='flex';el('sign').src=d.s}else{el('signwrap').style.display='none'}
+  el('q').textContent=d.q;el('fb').textContent='';el('next').style.display='none';
+  var h='';for(var k=0;k<d.o.length;k++){h+='<button class="opt" data-k="'+k+'">'+d.o[k]+'</button>'}
+  el('opts').innerHTML=h;
+  var bs=el('opts').querySelectorAll('.opt');for(var j=0;j<bs.length;j++){bs[j].onclick=pick}
+  bs[0].focus();
+}
+function pick(ev){
+  if(done)return;done=true;
+  var k=+ev.currentTarget.getAttribute('data-k'),d=Q[i],bs=el('opts').querySelectorAll('.opt');
+  for(var j=0;j<bs.length;j++){bs[j].disabled=true}
+  if(k===d.a){sc++;bs[k].classList.add('right');el('fb').innerHTML='<strong>Correct.</strong> '+d.e}
+  else{bs[k].classList.add('wrong');bs[d.a].classList.add('right');el('fb').innerHTML='<strong>Not quite.</strong> '+d.e;missed.push(d.q)}
+  el('score').textContent=sc+' correct';
+  el('next').textContent=(i<Q.length-1)?'Next question':'See results';
+  el('next').style.display='inline-block';el('next').focus();
+}
+function results(){
+  el('barfill').style.width='100%';el('prog').textContent='Finished';
+  var pass=sc>=PASS;
+  var h='<div class="result"><p class="big" style="color:'+(pass?'var(--green)':'var(--red)')+'">'+sc+'/'+Q.length+'</p>';
+  h+='<p class="verdict">'+(pass?'That is a pass.':'Not a pass yet.')+'</p>';
+  h+='<p class="note">'+(pass?'You cleared the '+PASS+' needed (80 percent). ':'You need '+PASS+' correct (80 percent). ')+(missed.length?'Questions to review:':'Perfect run.')+'</p>';
+  if(missed.length){h+='<ol class="missed">';for(var m=0;m<missed.length;m++){h+='<li>'+missed[m]+'</li>'}h+='</ol>'}
+  h+='<div class="actions" style="justify-content:center;margin-top:24px"><button class="btn" id="again">Take it again</button></div></div>';
+  el('card').innerHTML=h;
+  el('again').onclick=function(){location.reload()};
+}
+el('next').onclick=function(){if(i<Q.length-1){i++;show()}else{results()}};
+document.addEventListener('keydown',function(e){
+  if(done&&e.key==='Enter'&&el('next')&&el('next').style.display!=='none'){el('next').click();return}
+  var n=parseInt(e.key,10);if(!done&&n>=1&&n<=4){var b=el('opts').querySelectorAll('.opt')[n-1];if(b)b.click()}
+});
+show();
+</script>
+</body>
+</html>
