@@ -514,7 +514,7 @@ var Q=[
 {s:'signs/W8-3_Pavement_Ends.svg',q:'Under the manual\'s standard sign colors, the yellow background of this sign means:',o:['Stop or forbidden','Movement permitted','Directional guidance','General warning'],a:3,e:'Yellow means general warning. Warning signs are usually yellow diamonds with black letters or symbols.'},
 {q:'A funeral procession led by an escort vehicle with flashing lights is going through an intersection. You should:',o:['Let it pass and not drive between its cars','Turn on your headlights and follow it through','Drive between its cars when there is a gap','Pass it if you are inside the city limits'],a:0,e:'A funeral procession with an escort has the right of way. Do not drive between its vehicles unless a police or safety officer tells you to.'},
 ];
-var BANK=Q,PASS=32,COUNT=40,LET='ABCD';
+var BANK=Q,PASS=32,COUNT=40,SIGNS=10,LET='ABCD';
 var i,sc,done,missed;
 function over(){return sc>=PASS||missed.length>Q.length-PASS}
 function el(id){return document.getElementById(id)}
@@ -561,6 +561,16 @@ var music=(function(){
   var probe=document.createElement('audio');
   var ext=probe.canPlayType&&probe.canPlayType('audio/mp4; codecs="mp4a.40.2"')?'.m4a':'.webm';
   function stop(){if(player){player.pause();player=null}}
+  // Short sound effects: a coin for a right answer, "uh-no" for a wrong one.
+  // Each file starts with a little silence, so playback skips ahead to the sound.
+  var SFX={coin:{start:0.19},uhno:{start:0.3}};
+  function loadSfx(){for(var k in SFX){if(!SFX[k].el){var a=new Audio('audio/'+k+ext);a.preload='auto';a.setAttribute('playsinline','');a.load();SFX[k].el=a}}}
+  function sfx(k){
+    loadSfx();
+    var base=SFX[k].el,a=base.paused?base:base.cloneNode();
+    try{a.currentTime=SFX[k].start}catch(e){}
+    var p=a.play();if(p&&p.catch)p.catch(function(){});
+  }
   function play(){
     stop();
     player=new Audio(SONGS[Math.floor(Math.random()*SONGS.length)]+ext);
@@ -568,12 +578,18 @@ var music=(function(){
     var p=player.play();
     return p&&p.catch?p.catch(function(){return 'blocked'}):Promise.resolve();
   }
-  return {play:play,stop:stop};
+  return {play:play,stop:stop,sfx:sfx,loadSfx:loadSfx};
 })();
 function start(){
-  music.stop();
+  music.stop();music.loadSfx();
   // Pick questions and shuffle the answer order so the right answer isn't always in the same spot
-  Q=shuffle(BANK).slice(0,COUNT).map(function(d){
+  // Every test: 30 rules-of-the-road questions + 10 road sign questions. The sign questions are
+  // placed at random spots within the first 31, so they're all asked before the test can end at 32.
+  var signs=shuffle(BANK.filter(function(d){return d.s})).slice(0,SIGNS);
+  var rules=shuffle(BANK.filter(function(d){return !d.s})).slice(0,COUNT-SIGNS);
+  var spots=shuffle(Array.from({length:PASS-1},function(_,n){return n})).slice(0,SIGNS);
+  var pick=[];for(var n=0;n<COUNT;n++){pick.push(spots.indexOf(n)>=0?signs.pop():rules.pop())}
+  Q=pick.map(function(d){
     var idx=shuffle([0,1,2,3].slice(0,d.o.length));
     return {s:d.s,q:d.q,e:d.e,o:idx.map(function(n){return d.o[n]}),a:idx.indexOf(d.a)};
   });
@@ -597,8 +613,8 @@ function pick(ev){
   var k=+ev.currentTarget.getAttribute('data-k'),d=Q[i],bs=el('opts').querySelectorAll('.opt');
   for(var j=0;j<bs.length;j++){bs[j].disabled=true;if(j!==k&&j!==d.a)bs[j].classList.add('dim')}
   var ok=k===d.a;
-  if(ok){sc++;bs[k].classList.add('right');confetti()}
-  else{bs[k].classList.add('wrong');bs[d.a].classList.add('right');missed.push({d:d,pick:k})}
+  if(ok){sc++;bs[k].classList.add('right');confetti();music.sfx('coin')}
+  else{music.sfx('uhno');bs[k].classList.add('wrong');bs[d.a].classList.add('right');missed.push({d:d,pick:k})}
   el('fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'"><span class="ic">'+(ok?'✓':'✕')+'</span><div><strong>'+(ok?'Correct!':'Not quite. The answer is '+LET[d.a]+'.')+'</strong>'+esc(d.e)+'</div></div>';
   el('nOk').textContent='✓ '+sc;el('nNo').textContent='✕ '+missed.length;
   el('next').textContent=(i<Q.length-1&&!over())?'Next question →':'See my results';
