@@ -129,6 +129,9 @@
   .res-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
   #confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+  #flash{position:fixed;inset:0;pointer-events:none;z-index:49;background:radial-gradient(ellipse at center,rgba(220,20,40,.25),rgba(220,20,40,.6));opacity:0}
+  #flash.on{animation:flash .6s ease-out}
+  @keyframes flash{0%{opacity:0}15%{opacity:1}35%{opacity:.35}50%{opacity:.8}100%{opacity:0}}
   .foot{text-align:center;font-size:13px;color:var(--muted);margin-top:22px}
   .foot a{color:inherit}
 
@@ -211,6 +214,7 @@
 </main>
 
 <canvas id="confetti" aria-hidden="true"></canvas>
+<div id="flash" aria-hidden="true"></div>
 <script>
 var Q=[
 {easy:1,s:'signs/R1-1_Stop.png',q:'This sign means:',o:['Slow down, look both ways, and keep going if no one is near','Stop fully, then yield to crossing traffic and pedestrians','Stop only if another vehicle is approaching','Yield to traffic approaching from your right'],a:1,e:'A stop sign has eight sides and is red with white letters. Stop behind the stop line or crosswalk and yield in all directions.'},
@@ -491,22 +495,39 @@ var confetti=(function(){
     bits=bits.filter(function(b){return b.y<innerHeight+20});
     bits.forEach(function(b){
       b.vy=Math.min(b.vy+0.05*f,b.max);b.y+=b.vy*f;b.sway+=b.sw*f;b.x+=(Math.sin(b.sway)*1.2+b.vx)*f;b.rot+=b.vr*f;
-      cx.save();cx.translate(b.x,b.y);cx.rotate(b.rot);cx.scale(1,Math.cos(b.sway*2));cx.fillStyle=b.c;
-      if(b.round){cx.beginPath();cx.arc(0,0,b.w/2,0,7);cx.fill()}else{cx.fillRect(-b.w/2,-b.h/2,b.w,b.h)}
+      cx.save();cx.translate(b.x,b.y);cx.rotate(b.rot);if(!b.x2)cx.scale(1,Math.cos(b.sway*2));cx.fillStyle=b.c;
+      if(b.x2){cx.strokeStyle=b.c;cx.lineWidth=b.w/4.5;cx.lineCap='round';cx.beginPath();cx.moveTo(-b.w/2,-b.w/2);cx.lineTo(b.w/2,b.w/2);cx.moveTo(b.w/2,-b.w/2);cx.lineTo(-b.w/2,b.w/2);cx.stroke()}
+      else if(b.round){cx.beginPath();cx.arc(0,0,b.w/2,0,7);cx.fill()}else{cx.fillRect(-b.w/2,-b.h/2,b.w,b.h)}
       cx.restore();
     });
     if(bits.length){raf=requestAnimationFrame(tick)}else{raf=0;last=0;cx.clearRect(0,0,innerWidth,innerHeight)}
   }
   addEventListener('resize',size);size();
-  return function(){
+  function go(){if(!raf)raf=requestAnimationFrame(tick)}
+  // Red X's that fall on a wrong answer
+  function xs(){
+    if(still)return;
+    var REDS=['#e5374a','#c8102e','#ff4d5e','#b00020'],n=Math.min(36,Math.round(innerWidth/30)+14);
+    for(var j=0;j<n;j++){bits.push({x2:true,x:Math.random()*innerWidth,y:-30-Math.random()*innerHeight*0.35,w:18+Math.random()*18,h:0,
+      vx:(Math.random()-.5)*0.4,vy:2+Math.random()*2,max:5+Math.random()*3,rot:(Math.random()-.5)*0.6,vr:(Math.random()-.5)*0.06,
+      sway:Math.random()*6,sw:0.02+Math.random()*0.03,c:REDS[j%REDS.length]})}
+    go();
+  }
+  function burst(){
     if(still)return;
     var n=Math.min(140,Math.round(innerWidth/5)+40);
     for(var j=0;j<n;j++){bits.push({x:Math.random()*innerWidth,y:-20-Math.random()*innerHeight*0.35,w:6+Math.random()*6,h:8+Math.random()*8,
       vx:(Math.random()-.5)*0.6,vy:2+Math.random()*2,max:5+Math.random()*3,rot:Math.random()*6,vr:(Math.random()-.5)*0.2,
       sway:Math.random()*6,sw:0.03+Math.random()*0.05,c:COLORS[j%COLORS.length],round:Math.random()<0.25})}
-    if(!raf)raf=requestAnimationFrame(tick);
-  };
+    go();
+  }
+  return {burst:burst,xs:xs};
 })();
+// Quick red flash over the whole screen on a wrong answer
+function flash(){
+  var f=el('flash');if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  f.classList.remove('on');void f.offsetWidth;f.classList.add('on');
+}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function shuffle(a){a=a.slice();for(var j=a.length-1;j>0;j--){var r=Math.floor(Math.random()*(j+1)),t=a[j];a[j]=a[r];a[r]=t}return a}
 function screen(name){
@@ -522,9 +543,9 @@ var music=(function(){
   var probe=document.createElement('audio');
   var ext=probe.canPlayType&&probe.canPlayType('audio/mp4; codecs="mp4a.40.2"')?'.m4a':'.webm';
   function stop(){if(player){player.pause();player=null}}
-  // Short sound effects: a coin for a right answer, "uh-no" for a wrong one.
+  // Short sound effects: a coin for a right answer, "uh-no" or a buzzer (picked at random) for a wrong one.
   // Each file starts with a little silence, so playback skips ahead to the sound.
-  var SFX={coin:{start:0.19},uhno:{start:0.3}};
+  var SFX={coin:{start:0.19},uhno:{start:0.3},buzz:{start:0}};
   function loadSfx(){for(var k in SFX){if(!SFX[k].el){var a=new Audio('audio/'+k+ext);a.preload='auto';a.setAttribute('playsinline','');a.load();SFX[k].el=a}}}
   function sfx(k){
     loadSfx();
@@ -583,8 +604,8 @@ function pick(ev){
   var k=+ev.currentTarget.getAttribute('data-k'),d=Q[i],bs=el('opts').querySelectorAll('.opt');
   for(var j=0;j<bs.length;j++){bs[j].disabled=true;if(j!==k&&j!==d.a)bs[j].classList.add('dim')}
   var ok=k===d.a;
-  if(ok){sc++;bs[k].classList.add('right');confetti();music.sfx('coin')}
-  else{music.sfx('uhno');bs[k].classList.add('wrong');bs[d.a].classList.add('right');missed.push({d:d,pick:k})}
+  if(ok){sc++;bs[k].classList.add('right');confetti.burst();music.sfx('coin')}
+  else{music.sfx(Math.random()<0.5?'uhno':'buzz');confetti.xs();flash();bs[k].classList.add('wrong');bs[d.a].classList.add('right');missed.push({d:d,pick:k})}
   el('fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'"><span class="ic">'+(ok?'✓':'✕')+'</span><div><strong>'+(ok?'Correct!':'Not quite. The answer is '+LET[d.a]+'.')+'</strong>'+esc(d.e)+'</div></div>';
   el('nOk').textContent='✓ '+sc;el('nNo').textContent='✕ '+missed.length;
   el('next').textContent=(i<Q.length-1&&!over())?'Next question →':'See my results';
