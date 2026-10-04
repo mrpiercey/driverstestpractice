@@ -183,7 +183,7 @@
       <div class="stat"><b id="banksize">100</b><span>in the bank</span></div>
     </div>
     <button class="btn wide" id="start" type="button">Start practice test</button>
-    <div class="tips"><b>How it works:</b> pick an answer and you'll see right away if you got it, with an explanation from the manual. At the end you'll get your score and a review of anything you missed.</div>
+    <div class="tips"><b>How it works:</b> pick an answer and you'll see right away if you got it, with an explanation from the manual. The test ends as soon as you get 32 right (or miss 9). Then you'll get your score and a review of anything you missed.</div>
   </section>
 
   <!-- Quiz -->
@@ -314,6 +314,7 @@ var Q=[
 ];
 var BANK=Q,PASS=32,COUNT=40,LET='ABCD';
 var i,sc,done,missed;
+function over(){return sc>=PASS||missed.length>Q.length-PASS}
 function el(id){return document.getElementById(id)}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function shuffle(a){a=a.slice();for(var j=a.length-1;j>0;j--){var r=Math.floor(Math.random()*(j+1)),t=a[j];a[j]=a[r];a[r]=t}return a}
@@ -353,18 +354,18 @@ function pick(ev){
   else{bs[k].classList.add('wrong');bs[d.a].classList.add('right');missed.push({d:d,pick:k})}
   el('fb').innerHTML='<div class="fb '+(ok?'ok':'no')+'"><span class="ic">'+(ok?'✓':'✕')+'</span><div><strong>'+(ok?'Correct!':'Not quite. The answer is '+LET[d.a]+'.')+'</strong>'+esc(d.e)+'</div></div>';
   el('nOk').textContent='✓ '+sc;el('nNo').textContent='✕ '+missed.length;
-  el('next').textContent=(i<Q.length-1)?'Next question →':'See my results';
+  el('next').textContent=(i<Q.length-1&&!over())?'Next question →':'See my results';
   el('nextbar').classList.remove('hidden');
   el('next').focus({preventScroll:true});
   if(window.innerWidth>560)el('fb').scrollIntoView({block:'nearest',behavior:'smooth'});
 }
 function results(){
-  var pass=sc>=PASS,pct=Math.round(sc/Q.length*100),C=2*Math.PI*52;
+  var n=i+1,early=n<Q.length,pass=sc>=PASS,pct=Math.round(sc/n*100),C=2*Math.PI*52;
   var col=pass?'var(--green)':'var(--red)';
   var h='<div class="ring"><svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fg" id="arc" cx="60" cy="60" r="52" stroke="'+col+'" stroke-dasharray="'+C+'" stroke-dashoffset="'+C+'"/></svg>';
-  h+='<div class="num"><b style="color:'+col+'">'+sc+'/'+Q.length+'</b><span>'+pct+'%</span></div></div>';
+  h+='<div class="num"><b style="color:'+col+'">'+sc+'/'+n+'</b><span>'+pct+'%</span></div></div>';
   h+='<p class="verdict" style="color:'+col+'">'+(pass?(missed.length?'You passed! 🎉':'Perfect score! 🏆'):'Not quite yet')+'</p>';
-  h+='<p class="note">'+(pass?'You cleared the '+PASS+' needed to pass.':'You need '+PASS+' correct to pass. '+(PASS-sc)+' more and you\'ve got it.')+'</p>';
+  h+='<p class="note">'+(pass?(early?'You got '+PASS+' right in '+n+' questions, so the test ended early.':'You cleared the '+PASS+' needed to pass.'):(early?'You missed '+missed.length+', so you can\'t reach '+PASS+' this time. The test ended early.':'You need '+PASS+' correct to pass. '+(PASS-sc)+' more and you\'ve got it.'))+'</p>';
   h+='<div class="res-actions"><button class="btn" id="again" type="button">Take a new test</button>'+(missed.length?'<a class="btn ghost" href="#review" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">Review '+missed.length+' missed</a>':'')+'</div>';
   if(missed.length){
     h+='<div class="review" id="review"><h2>Questions to review</h2>';
@@ -379,12 +380,12 @@ function results(){
   el('done').innerHTML=h;
   screen('done');
   el('again').onclick=start;
-  requestAnimationFrame(function(){requestAnimationFrame(function(){el('arc').style.strokeDashoffset=C*(1-sc/Q.length)})});
+  requestAnimationFrame(function(){requestAnimationFrame(function(){el('arc').style.strokeDashoffset=C*(1-sc/n)})});
 }
 el('banksize').textContent=BANK.length;
 el('start').onclick=start;
 el('quit').onclick=function(){screen('home')};
-el('next').onclick=function(){if(i<Q.length-1){i++;show()}else{results()}};
+el('next').onclick=function(){if(i<Q.length-1&&!over()){i++;show()}else{results()}};
 document.addEventListener('keydown',function(e){
   if(e.metaKey||e.ctrlKey||e.altKey||el('quiz').classList.contains('hidden'))return;
   if(done&&e.key==='Enter'){e.preventDefault();el('next').click();return}
