@@ -543,6 +543,13 @@ var music=(function(){
   var probe=document.createElement('audio');
   var ext=probe.canPlayType&&probe.canPlayType('audio/mp4; codecs="mp4a.40.2"')?'.m4a':'.webm';
   function stop(){if(player){player.pause();player=null}}
+  // Sad music that loops on the results screen after a fail, until the student starts over
+  function failLoop(){
+    stop();
+    player=new Audio('audio/losingsong'+ext);player.loop=true;player.setAttribute('playsinline','');
+    var p=player.play();
+    return p&&p.catch?p.catch(function(){return 'blocked'}):Promise.resolve();
+  }
   // Short sound effects: a coin for a right answer, "uh-no" or a buzzer (picked at random) for a wrong one.
   // Each file starts with a little silence, so playback skips ahead to the sound.
   var SFX={coin:{start:0.19},uhno:{start:0.3},buzz:{start:0}};
@@ -560,7 +567,7 @@ var music=(function(){
     var p=player.play();
     return p&&p.catch?p.catch(function(){return 'blocked'}):Promise.resolve();
   }
-  return {play:play,stop:stop,sfx:sfx,loadSfx:loadSfx};
+  return {play:play,failLoop:failLoop,stop:stop,sfx:sfx,loadSfx:loadSfx};
 })();
 function start(){
   music.stop();music.loadSfx();
@@ -632,10 +639,10 @@ function results(){
     h+='</div>';
   }
   el('done').innerHTML=h;
-  if(pass)music.play().then(function(r){
+  (pass?music.play():music.failLoop()).then(function(r){
     // If the browser blocked autoplay, offer a button to start the song
-    if(r==='blocked'){var b=document.createElement('button');b.className='btn ghost';b.type='button';b.textContent='♪ Play victory song';
-      b.onclick=function(){music.play();b.remove()};el('done').querySelector('.res-actions').appendChild(b)}
+    if(r==='blocked'){var b=document.createElement('button');b.className='btn ghost';b.type='button';b.textContent=pass?'♪ Play victory song':'♪ Play music';
+      b.onclick=function(){(pass?music.play():music.failLoop());b.remove()};el('done').querySelector('.res-actions').appendChild(b)}
   });
   screen('done');
   el('again').onclick=start;
