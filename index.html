@@ -203,7 +203,7 @@
       <div id="opts" role="group" aria-label="Answer choices"></div>
       <div id="fb" aria-live="polite"></div>
       <div class="actions hidden" id="nextbar"><button class="btn" id="next" type="button">Next question →</button></div>
-      <p class="keys">Tip: press <kbd>A</kbd>–<kbd>D</kbd> or <kbd>1</kbd>–<kbd>4</kbd> to answer, <kbd>Enter</kbd> for next.</p>
+      <p class="keys">Tip: press <kbd>A</kbd>–<kbd>C</kbd> or <kbd>1</kbd>–<kbd>3</kbd> to answer, <kbd>Enter</kbd> for next.</p>
     </div>
   </section>
 
@@ -479,7 +479,7 @@ var Q=[
 {s:'signs/W8-3_Pavement_Ends.svg',q:'Under the manual\'s standard sign colors, the yellow background of this sign means:',o:['Stop or forbidden','Movement permitted','Directional guidance','General warning'],a:3,e:'Yellow means general warning. Warning signs are usually yellow diamonds with black letters or symbols.'},
 {easy:1,q:'A funeral procession led by an escort vehicle with flashing lights is going through an intersection. You should:',o:['Let it pass and not drive between its cars','Turn on your headlights and follow it through','Drive between its cars when there is a gap','Pass it if you are inside the city limits'],a:0,e:'A funeral procession with an escort has the right of way. Do not drive between its vehicles unless a police or safety officer tells you to.'},
 ];
-var BANK=Q,PASS=32,COUNT=40,SIGNS=10,EASY=20,LET='ABCD';
+var BANK=Q,PASS=32,COUNT=40,SIGNS=10,EASY=20,CHOICES=3,LET='ABC';
 var i,sc,done,missed;
 function over(){return sc>=PASS||missed.length>Q.length-PASS}
 function el(id){return document.getElementById(id)}
@@ -587,8 +587,10 @@ function start(){
   var spots=shuffle(Array.from({length:PASS-1},function(_,n){return n})).slice(0,SIGNS);
   var pick=[];for(var n=0;n<PASS;n++){pick.push(spots.indexOf(n)>=0?signs.pop():rules.pop())}
   pick=pick.concat(rest);
+  // The real test shows 3 choices per question, so keep the right answer plus 2 of the wrong ones at random.
   Q=pick.map(function(d){
-    var idx=shuffle([0,1,2,3].slice(0,d.o.length));
+    var wrong=shuffle(d.o.map(function(_,n){return n}).filter(function(n){return n!==d.a})).slice(0,CHOICES-1);
+    var idx=shuffle([d.a].concat(wrong));
     return {s:d.s,q:d.q,e:d.e,o:idx.map(function(n){return d.o[n]}),a:idx.indexOf(d.a)};
   });
   i=0;sc=0;missed=[];
@@ -655,8 +657,8 @@ el('next').onclick=function(){if(i<Q.length-1&&!over()){i++;show()}else{results(
 document.addEventListener('keydown',function(e){
   if(e.metaKey||e.ctrlKey||e.altKey||el('quiz').classList.contains('hidden'))return;
   if(done&&e.key==='Enter'){e.preventDefault();el('next').click();return}
-  var n=parseInt(e.key,10);if(isNaN(n))n='abcd'.indexOf(e.key.toLowerCase())+1;
-  if(!done&&n>=1&&n<=4){var b=el('opts').querySelectorAll('.opt')[n-1];if(b)b.click()}
+  var n=parseInt(e.key,10);if(isNaN(n))n=LET.toLowerCase().indexOf(e.key.toLowerCase())+1;
+  if(!done&&n>=1&&n<=CHOICES){var b=el('opts').querySelectorAll('.opt')[n-1];if(b)b.click()}
 });
 </script>
 </body>
